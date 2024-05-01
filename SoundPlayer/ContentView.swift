@@ -17,39 +17,47 @@ struct ContentView: View {
             }
             
             VStack {
-                Text("Sample Rate:")
-                HStack {
-                    Text("22050")
-                    Spacer()
-                    Text("\(Int(soundManager.sampleRate))")
-                    Spacer()
-                    Text("66150")
-                }
-                Slider(value: $soundManager.sampleRate, in: 22050.0...66150.0)
-            }
-            
-            VStack {
                 Text("Frequency:")
-                HStack {
-                    Text("000")
-                    Spacer()
-                    Text("\(Int(soundManager.frequency))")
-                    Spacer()
-                    Text("880")
+                ZStack {
+                    TextField(
+                        "Sample Rate",
+                        text: Binding {
+                            "\(Int(soundManager.frequency))"
+                        } set: {
+                            soundManager.frequency = Double($0) ?? 440
+                        }
+                    )
+                    .multilineTextAlignment(.center)
+                    
+                    HStack {
+                        Text("0")
+                        Spacer()
+                        Text("1000")
+                    }
                 }
-                Slider(value: $soundManager.frequency, in: 0...880)
+                Slider(value: $soundManager.frequency, in: 0...1000)
             }
             
             VStack {
                 Text("Amplitude:")
-                HStack {
-                    Text("0.0")
-                    Spacer()
-                    Text(String(format: "%.2f", soundManager.amplitude))
-                    Spacer()
-                    Text("1.0")
+                ZStack {
+                    TextField(
+                        "Sample Rate",
+                        text: Binding {
+                            String(format: "%.2f", soundManager.waveform.amplitude)
+                        } set: {
+                            soundManager.waveform.amplitude = Float($0) ?? 0.5
+                        }
+                    )
+                    .multilineTextAlignment(.center)
+                    
+                    HStack {
+                        Text("0.0")
+                        Spacer()
+                        Text("1.0")
+                    }
                 }
-                Slider(value: $soundManager.amplitude, in: 0.0...1.0)
+                Slider(value: $soundManager.waveform.amplitude, in: 0.0...1.0)
             }
             
             Picker(selection: $waveform) {
@@ -62,13 +70,17 @@ struct ContentView: View {
                 Text("Waveform")
             }
             .onChange(of: waveform) {
-                soundManager.waveform = switch waveform {
-                case .square: .square
-                case .sine: .sine
-                case .triangle: .triangle
-                case .sawtooth: .sawtooth
-                case .reverseSawtooth: .reverseSawtooth
+                let oldAmp = soundManager.waveform.amplitude
+                
+                let algo = switch waveform {
+                case .square: Waveform.square.algo
+                case .sine: Waveform.sine.algo
+                case .triangle: Waveform.triangle.algo
+                case .sawtooth: Waveform.sawtooth.algo
+                case .reverseSawtooth: Waveform.reverseSawtooth.algo
                 }
+                
+                soundManager.waveform = Waveform(amplitude: oldAmp, algo: algo)
             }
         }
         .monospaced()

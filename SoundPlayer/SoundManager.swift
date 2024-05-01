@@ -4,17 +4,10 @@ import Combine
 class SoundManager: ObservableObject {
     private var audioEngine = AVAudioEngine()
     private var audioSourceNode: AVAudioSourceNode?
-    private var audioFormat: AVAudioFormat!
+    private var audioFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)
     
     @Published var waveform: Waveform = .square
     @Published var frequency: Double = 440.0
-    @Published var amplitude: Float = 0.5
-    @Published var sampleRate: Double = 44100.0 {
-        didSet {
-            audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
-        }
-    }
-
     @Published var isPlaying: Bool = false
     
     init() {
@@ -44,26 +37,21 @@ class SoundManager: ObservableObject {
         audioEngine.stop()
         
         audioEngine = AVAudioEngine()
-        audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
-        
         audioSourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
             guard let self = self else { return noErr }
 
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             let frameLength = Int(frameCount)
             var currentSampleTime = 0.0
-            let timePerSample = 1.0 / self.sampleRate
+            let timePerSample = 1.0 / (self.audioFormat?.sampleRate ?? 48_000)
 
             for frame in 0..<frameLength {
-                let sampleVal = sin(2.0 * .pi * self.frequency * currentSampleTime)
-                let value = Float(sampleVal) * self.amplitude
-
-                // Generate a square wave
-                let squareWaveValue = waveform.value(for: value)
-
+                let sampleVal = Float(sin(2.0 * .pi * self.frequency * currentSampleTime))
+                let waveValue = waveform.value(for: sampleVal)
+                
                 for buffer in ablPointer {
                     let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                    buf[frame] = squareWaveValue
+                    buf[frame] = waveValue
                 }
                 currentSampleTime += timePerSample
             }

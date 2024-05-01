@@ -1,14 +1,14 @@
 import Foundation
 
 struct Waveform {
-    private let algo: (Float, Float) -> Float
-    private let amplitude: Float
+    let algo: (Float, Float) -> Float
+    var amplitude: Float
     
     func value(for input: Float) -> Float {
         return algo(input, amplitude)
     }
     
-    init(amplitude: Float = 1, algo: @escaping (Float, Float) -> Float) {
+    init(amplitude: Float = 0.5, algo: @escaping (Float, Float) -> Float) {
         self.algo = algo
         self.amplitude = amplitude
     }
